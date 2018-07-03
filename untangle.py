@@ -4,6 +4,7 @@ from __future__ import print_function
 import pygame
 import random
 import score
+import scoreboard
 
 import math
 import sys
@@ -82,10 +83,13 @@ class det:
 # https://en.wikipedia.org/wiki/X11_color_names (not all apply)
 # pygame.color.Color('Black')
 
+GAME_MODES = ['easy','normal','hard','extreme']
+
 SCREEN_SIZES = {
     'easy':{'width':600, 'height':400},
     'normal':{'width':800, 'height':600},
-    'hard':{'width':1280, 'height':1024}
+    'hard':{'width':1024, 'height':728},
+    'extreme':{'width':1280, 'height':1024}
 }
 
 SCREEN_WIDTH  = 800
@@ -94,7 +98,8 @@ SCREEN_HEIGHT = 600
 NODES = {
     'easy':10,
     'normal':20,
-    'hard':50
+    'hard':50,
+    'extreme':100
 }
 DEFAULTNODES = 20
 DEFAULTANIMAT = True
@@ -110,7 +115,7 @@ END = 5
 class Game:
     name = 'entangled'
 
-    def __init__(self, clock = None, nodes = None, anim = DEFAULTANIMAT, difficulty = DEFAULTDIFFICULTY):
+    def __init__(self, clock = None, nodes = None, anim = DEFAULTANIMAT, difficulty = DEFAULTDIFFICULTY, screenCenter = (int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2))):
         if nodes is None:
             if difficulty not in NODES:
                 difficulty = DEFAULTDIFFICULTY
@@ -119,6 +124,7 @@ class Game:
         
         self.rectsAmmount = nodes
 
+        self.screenCenter = screenCenter
 
         self.blockSize = 14
         self.gridSize = 1 # self.blockSize /2 +1 #rougher grid makes it a cluncky to use
@@ -134,6 +140,7 @@ class Game:
             'markedConnecting' : pygame.color.Color('White'),
             'background' : pygame.color.Color('Dim Gray'),
             'line' : pygame.color.Color('Black'),
+            'oddline' : pygame.color.Color('#383838')
         }
 
         self.selected = None
@@ -234,8 +241,8 @@ class Game:
         slice = 2 * math.pi / points
         for i in range(0, int(points)):
             angle = slice * i
-            x = self.myRound(int(center[0] + radius * math.cos(angle)))
-            y = self.myRound(int(center[1] + radius * math.sin(angle)))
+            x = self.myRound(int(self.screenCenter[0] + radius * math.cos(angle)))
+            y = self.myRound(int(self.screenCenter[1] + radius * math.sin(angle)))
             positions.append((x,y))
         return positions
 
@@ -629,8 +636,11 @@ class Game:
 
         # draw lines
         for r in self.rects:
+            lineIndex = 0
             for l in r[1]:
-                pygame.draw.line(screen, self.colorPalette['line'], r[0].center, self.rects[l][0].center, 2)
+                lineColor = self.colorPalette['line'] if lineIndex % 2 == 0 else self.colorPalette['oddline']
+                pygame.draw.line(screen, lineColor, r[0].center, self.rects[l][0].center, 2)
+                lineIndex += 1
 
         # draw rects aka. nodes
         for i, r in enumerate(self.rects):
@@ -678,7 +688,7 @@ if __name__ == "__main__" :
 
     difficulty = DEFAULTDIFFICULTY
     for word in sys.argv[1:]:
-        if str(word).lower() in ['easy','normal','hard']:
+        if str(word).lower() in GAME_MODES:
             difficulty = str(word).lower()
             break
     SCREEN_WIDTH = SCREEN_SIZES[difficulty]['width']
@@ -688,10 +698,11 @@ if __name__ == "__main__" :
     pygame.init()
     pygame.display.set_caption('Untangle')
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    scoreboard.draw(screen)
     screen_rect = screen.get_rect()
     clock = pygame.time.Clock()
 
-    game = Game(clock, nodes, anim, difficulty)
+    game = Game(clock, nodes, anim, difficulty, (int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2)))
     running = True
     try:
         while( running and game.getRunningState() ):

@@ -17,6 +17,10 @@ HIGH_SCORES_TEMPLATE = {
     'hard': {
         'moves':[],
         'time':[]
+    },
+    'extreme': {
+        'moves':[],
+        'time':[]
     }
 }
 
